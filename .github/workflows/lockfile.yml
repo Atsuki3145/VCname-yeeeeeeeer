@@ -1,6 +1,9 @@
 name: Generate lockfile
 on: [push]
 
+permissions:
+  contents: write   # ← GitHub Actions に push 権限を付与
+
 jobs:
   build:
     runs-on: ubuntu-latest
