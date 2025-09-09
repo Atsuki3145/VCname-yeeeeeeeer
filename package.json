@@ -1,13 +1,11 @@
 {
-  "name": "vc-rename-bot",
+  "name": "vcname-yeeeeeeeer",
   "version": "1.0.0",
-  "description": "Discord VC rename manager bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "discord.js": "^14.15.2",
-    "dotenv": "^16.4.5"
+    "discord.js": "^14.13.0"
   }
 }
