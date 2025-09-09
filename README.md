@@ -10,3 +10,4 @@ DiscordのVCの名前を変更できるBotです。
 ```bash
 npm install
 npm start
+　
