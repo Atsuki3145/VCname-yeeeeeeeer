@@ -10,3 +10,16 @@ client.once("ready", () => {
 });
 
 client.login(process.env.TOKEN);
+// ====== Web サーバー部分 ======
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Bot is running!");
+});
+
+// Koyeb が PORT 環境変数を設定するのでそれを使う
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+  console.log(`✅ Web server running on port ${PORT}`);
+});
