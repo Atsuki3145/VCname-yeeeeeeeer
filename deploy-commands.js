@@ -1,20 +1,24 @@
+const { REST, Routes } = require("discord.js");
 require("dotenv").config();
-const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 
 const commands = [
-  new SlashCommandBuilder()
-    .setName("ping")
-    .setDescription("Replies with Pong!"),
-].map(command => command.toJSON());
+  {
+    name: "ping",
+    description: "Replies with Pong!",
+  },
+];
 
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
 (async () => {
   try {
-    console.log("🔄 スラッシュコマンドを登録中...");
+    console.log("🔄 コマンド登録を開始します…");
 
     await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID), // BotのアプリケーションID
+      Routes.applicationGuildCommands(
+        process.env.CLIENT_ID,
+        process.env.GUILD_ID
+      ),
       { body: commands }
     );
 
