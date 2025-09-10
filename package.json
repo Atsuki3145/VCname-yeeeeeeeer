@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "Discord bot",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "register": "node deploy-commands.js"
+"scripts": {
+  "start": "node index.js",
+  "register": "node deploy-commands.js",
+  "heroku-postbuild": "npm run register"
   },
   "dependencies": {
     "discord.js": "^14.15.3",
