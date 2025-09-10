@@ -23,3 +23,11 @@ const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`✅ Web server running on port ${PORT}`);
 });
+
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === "ping") {
+    await interaction.reply("🏓 Pong!");
+  }
+});
