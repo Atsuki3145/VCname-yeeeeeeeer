@@ -41,7 +41,7 @@ client.on('interactionCreate', async interaction => {
 
     if (!isOwner) {
       return interaction.reply({
-        content: '❌ このVCを作成したユーザーではないため、名前変更はできません。',
+        content: '❌ あなたはここvcの変更権限を持っていないため、名前変更は拒否されました。',
         ephemeral: true
       });
     }
