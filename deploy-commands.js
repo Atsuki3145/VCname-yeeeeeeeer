@@ -1,22 +1,21 @@
 const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 
 const commands = [
-  new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!"),
+  new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Replies with Pong!"),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
-const guildIds = [process.env.GUILD_ID].filter(Boolean);
-
 (async () => {
   try {
-    for (const id of guildIds) {
-      await rest.put(
-        Routes.applicationGuildCommands(process.env.CLIENT_ID, id),
-        { body: commands }
-      );
-      console.log(`✅ コマンド登録完了: ${id}`);
-    }
+    console.log("⏳ コマンド登録中...");
+    await rest.put(
+      Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+      { body: commands }
+    );
+    console.log("✅ コマンド登録完了！");
   } catch (error) {
     console.error(error);
   }
