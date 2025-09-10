@@ -2,12 +2,11 @@ const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 
 const commands = [
   new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!"),
-  new SlashCommandBuilder().setName("hello").setDescription("Say hello!"),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
-const guildIds = [process.env.GUILD_ID_1, process.env.GUILD_ID_2].filter(Boolean);
+const guildIds = [process.env.GUILD_ID].filter(Boolean);
 
 (async () => {
   try {
