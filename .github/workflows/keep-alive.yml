@@ -2,13 +2,12 @@ name: Keep Render awake
 
 on:
   schedule:
-    - cron: '*/5 * * * *'    # 5分ごとに実行 (UTC時間)
-  workflow_dispatch:         # 手動実行も可能
+    - cron: '*/5 * * * *'    # 5分ごとに実行 (UTC)
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
-
     steps:
       - name: Ping render service (with retries)
         env:
@@ -28,9 +27,3 @@ jobs:
 
           echo "All attempts failed."
           exit 1
-// keepalive用ルート
-app.get("/", (req, res) => {
-  const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-  console.log(`✅ Keepalive Ping 受信: ${now}`);
-  res.send("Bot is alive!");
-});
