@@ -1,8 +1,9 @@
 // index.js
 require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
 const express = require('express');
 
+// ================== Discord Bot ==================
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
@@ -19,54 +20,76 @@ client.on('interactionCreate', async interaction => {
   if (interaction.commandName === 'vcrename') {
     const newName = interaction.options.getString('name', true);
     const member = interaction.member;
-    const user = interaction.user;
 
     // VCに入っているか
     const voiceChannel = member?.voice?.channel;
     if (!voiceChannel) {
-      return interaction.reply({ content: '❌ VCに入ってから使ってください。' });
-    }
-
-    // 所有者判定（ユーザー名 / ニックネーム / ユーザーID のいずれかを含むか）
-    const vcNameLower = voiceChannel.name.toLowerCase();
-    const usernameLower = user.username.toLowerCase();
-    const nicknameLower = (member.nickname || '').toLowerCase();
-    const userId = user.id;
-
-    const isOwner =
-      vcNameLower.includes(usernameLower) ||
-      (nicknameLower && vcNameLower.includes(nicknameLower)) ||
-      voiceChannel.name.includes(userId);
-
-    if (!isOwner) {
-      return interaction.reply({
-        content: '❌ あなたはこのVCの名前変更権を持っていないため、拒否されました。'
-      });
+      return interaction.reply({ content: '❌ VCに入ってから使ってください。', ephemeral: true });
     }
 
     // 実際の名前変更
     try {
       await voiceChannel.setName(newName);
-      return interaction.reply({ content: `✅ <@${user.id}> が VC名を **${newName}** に変更しました` });
+      return interaction.reply({ content: `✅ VC名を **${newName}** に変更しました` });
     } catch (err) {
       console.error('setName error:', err);
       return interaction.reply({
-        content: '⚠️ 名前変更に失敗しました。Bot に「チャンネルを管理する」権限があるか確認してください。'
+        content: '⚠️ 名前変更に失敗しました。Bot に「チャンネルを管理する」権限があるか確認してください。',
+        ephemeral: true
       });
     }
   }
 });
 
-// ===== ダミーWebサーバー（Render / GitHub Actions の Keepalive 用） =====
+// ================== スラッシュコマンド登録 ==================
+(async () => {
+  try {
+    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+
+    const commands = [
+      new SlashCommandBuilder()
+        .setName('vcrename')
+        .setDescription('今いるVCの名前を変更します')
+        .addStringOption(option =>
+          option.setName('name')
+            .setDescription('新しいVC名')
+            .setRequired(true)
+        )
+    ].map(command => command.toJSON());
+
+    console.log('⏳ スラッシュコマンドを登録中...');
+    await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID),
+      { body: commands }
+    );
+    console.log('✅ スラッシュコマンド登録完了！');
+  } catch (err) {
+    console.error('コマンド登録エラー:', err);
+  }
+})();
+
+// ================== Keepalive & 可視化 ==================
 const app = express();
+let pingCount = 0;
+let lastPing = null;
+
 app.get('/', (req, res) => {
-  const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-  console.log(`✅ Keepalive Ping 受信: ${now}`);
-  res.send("Bot is alive!");
+  pingCount++;
+  lastPing = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  console.log(`✅ Keepalive Ping 受信: ${lastPing}`);
+  res.send(`Bot is alive! ✅ Ping Count: ${pingCount} (Last: ${lastPing})`);
+});
+
+app.get('/status', (req, res) => {
+  res.json({
+    status: "alive",
+    pingCount,
+    lastPing
+  });
 });
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`✅ Web server running on port ${PORT}`));
 
-// Discord ログイン
+// ================== Discord ログイン ==================
 client.login(process.env.TOKEN);
