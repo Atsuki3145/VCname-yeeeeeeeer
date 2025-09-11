@@ -62,4 +62,11 @@ const app = express();
 app.get('/', (req, res) => {
   const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
   console.log(`✅ Keepalive Ping 受信: ${now}`);
-  res.send("B
+  res.send("Bot is alive!");
+});
+
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`✅ Web server running on port ${PORT}`));
+
+// Discord ログイン
+client.login(process.env.TOKEN);
