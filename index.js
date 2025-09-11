@@ -24,7 +24,7 @@ client.on('interactionCreate', async interaction => {
     // VCに入っているか
     const voiceChannel = member?.voice?.channel;
     if (!voiceChannel) {
-      return interaction.reply({ content: '❌ VCに入ってから使ってください。', ephemeral: true });
+      return interaction.reply({ content: '❌ VCに入ってから使ってください。' });
     }
 
     // 所有者判定（ユーザー名 / ニックネーム / ユーザーID のいずれかを含むか）
@@ -40,20 +40,18 @@ client.on('interactionCreate', async interaction => {
 
     if (!isOwner) {
       return interaction.reply({
-        content: '❌ あなたはこのVCの名前変更権を持っていないため、拒否されました。',
-        ephemeral: true
+        content: '❌ あなたはこのVCの名前変更権を持っていないため、拒否されました。'
       });
     }
 
     // 実際の名前変更
     try {
       await voiceChannel.setName(newName);
-      return interaction.reply({ content: `✅ VC名を **${newName}** に変更しました` });
+      return interaction.reply({ content: `✅ <@${user.id}> が VC名を **${newName}** に変更しました` });
     } catch (err) {
       console.error('setName error:', err);
       return interaction.reply({
-        content: '⚠️ 名前変更に失敗しました。Bot に「チャンネルを管理する」権限があるか確認してください。',
-        ephemeral: true
+        content: '⚠️ 名前変更に失敗しました。Bot に「チャンネルを管理する」権限があるか確認してください。'
       });
     }
   }
@@ -64,11 +62,4 @@ const app = express();
 app.get('/', (req, res) => {
   const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
   console.log(`✅ Keepalive Ping 受信: ${now}`);
-  res.send("Bot is alive!");
-});
-
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`✅ Web server running on port ${PORT}`));
-
-// Discord ログイン
-client.login(process.env.TOKEN);
+  res.send("B
