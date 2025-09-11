@@ -7,10 +7,12 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
 
+// Bot起動時
 client.once('ready', () => {
   console.log(`${client.user.tag} でログインしました`);
 });
 
+// /vcrename コマンド処理
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -25,10 +27,7 @@ client.on('interactionCreate', async interaction => {
       return interaction.reply({ content: '❌ VCに入ってから使ってください。', ephemeral: true });
     }
 
-    // 所有者判定（実用的な複数パターンで判定）
-    // - VC名にユーザー名が含まれている（小文字比較）
-    // - VC名にニックネーム（サーバー内の表示名）が含まれている
-    // - VC名にユーザーIDが含まれている（もしIDで付けているなら）
+    // 所有者判定（ユーザー名 / ニックネーム / ユーザーID のいずれかを含むか）
     const vcNameLower = voiceChannel.name.toLowerCase();
     const usernameLower = user.username.toLowerCase();
     const nicknameLower = (member.nickname || '').toLowerCase();
@@ -41,7 +40,7 @@ client.on('interactionCreate', async interaction => {
 
     if (!isOwner) {
       return interaction.reply({
-        content: '❌ あなたはここvcの名前変更権を持っていないため、拒否されました。',
+        content: '❌ あなたはこのVCの名前変更権を持っていないため、拒否されました。',
         ephemeral: true
       });
     }
@@ -60,11 +59,16 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// ===== ダミーWebサーバー（Koyebのヘルスチェック通過用） =====
+// ===== ダミーWebサーバー（Render / GitHub Actions の Keepalive 用） =====
 const app = express();
-app.get('/', (req, res) => res.send('Bot is running'));
+app.get('/', (req, res) => {
+  const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  console.log(`✅ Keepalive Ping 受信: ${now}`);
+  res.send("Bot is alive!");
+});
+
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`✅ Web server running on port ${PORT}`));
 
-// ログイン
+// Discord ログイン
 client.login(process.env.TOKEN);
