@@ -20,22 +20,54 @@ client.on('interactionCreate', async interaction => {
   if (interaction.commandName === 'vcrename') {
     const newName = interaction.options.getString('name', true);
     const member = interaction.member;
+    const user = interaction.user;
 
     // VCに入っているか
     const voiceChannel = member?.voice?.channel;
     if (!voiceChannel) {
-      return interaction.reply({ content: '❌ VCに入ってから使ってください。', ephemeral: true });
+      return interaction.reply({ content: '❌ VCに入ってから使ってください。' });
     }
 
-    // 実際の名前変更
+    // ================== 所有者チェック ==================
+    const vcName = voiceChannel.name || '';
+    const userId = user.id;
+
+    // 正規化（英数字のみ・小文字化）
+    const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const vcNorm = normalize(vcName);
+    const usernameNorm = normalize(user.username || '');
+    const nicknameNorm = normalize(member.nickname || member.displayName || '');
+
+    // IDは完全一致トークンで判定
+    const idRegex = new RegExp(`(^|[^0-9])${userId}([^0-9]|$)`);
+    const isOwner =
+      idRegex.test(vcName) ||
+      (usernameNorm && vcNorm.includes(usernameNorm)) ||
+      (nicknameNorm && vcNorm.includes(nicknameNorm));
+
+    console.log('vcrename: owner-check', {
+      channelName: vcName,
+      userTag: user.tag,
+      userId,
+      usernameNorm,
+      nicknameNorm,
+      isOwner
+    });
+
+    if (!isOwner) {
+      return interaction.reply({
+        content: '❌ あなたはこのVCの名前変更権を持っていません。'
+      });
+    }
+
+    // ================== 実際の名前変更 ==================
     try {
       await voiceChannel.setName(newName);
       return interaction.reply({ content: `✅ VC名を **${newName}** に変更しました` });
     } catch (err) {
       console.error('setName error:', err);
       return interaction.reply({
-        content: '⚠️ 名前変更に失敗しました。Bot に「チャンネルを管理する」権限があるか確認してください。',
-        ephemeral: true
+        content: '⚠️ 名前変更に失敗しました。Bot に「チャンネルを管理する」権限があるか確認してください。'
       });
     }
   }
