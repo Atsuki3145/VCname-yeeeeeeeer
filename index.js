@@ -123,5 +123,16 @@ app.get('/status', (req, res) => {
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`✅ Web server running on port ${PORT}`));
 
+// ================== 環境変数チェック ==================
+if (!process.env.TOKEN) {
+  console.error('❌ TOKEN が読み込まれていません！Render の Environment 設定を確認してください。');
+  process.exit(1);
+}
+if (!process.env.CLIENT_ID) {
+  console.error('❌ CLIENT_ID が読み込まれていません！Render の Environment 設定を確認してください。');
+  process.exit(1);
+}
+console.log('✅ 環境変数チェック完了: TOKEN / CLIENT_ID 読み込み成功');
+
 // ================== Discord ログイン ==================
 client.login(process.env.TOKEN);
