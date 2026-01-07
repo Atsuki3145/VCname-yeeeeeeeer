@@ -67,7 +67,7 @@ client.on('interactionCreate', async interaction => {
     } catch (err) {
       console.error('setName error:', err);
       return interaction.reply({
-        content: '⚠️ 名前変更に失敗しました。Bot に「チャンネルを管理する」権限があるか確認してください。'
+        content: '⚠️ 名前変更に失敗しました。100文字までです。
       });
     }
   }
