@@ -67,7 +67,7 @@ client.on('interactionCreate', async interaction => {
     } catch (err) {
       console.error('setName error:', err);
       return interaction.reply({
-        content: '⚠️ 名前変更に失敗しました。100文字までです。
+        content: '⚠️ 名前変更に失敗しました。100文字までです。`
       });
     }
   }
