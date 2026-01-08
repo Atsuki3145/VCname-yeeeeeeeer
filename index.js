@@ -136,3 +136,9 @@ console.log('✅ 環境変数チェック完了: TOKEN / CLIENT_ID 読み込み�
 
 // ================== Discord ログイン ==================
 client.login(process.env.TOKEN);
+
+if (interaction.commandName === 'botsay') {
+  const msg = interaction.options.getString('text', true);
+  await interaction.channel.send(msg);
+  await interaction.reply({ content: '送信した', ephemeral: true });
+}
