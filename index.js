@@ -34,7 +34,7 @@ client.on('interactionCreate', async interaction => {
   if (!voiceChannel) {
     return interaction.reply({
       content: '❌ VCに入ってから使ってください。',
-      ephemeral: true
+      ephemeral: false
     });
   }
 
@@ -69,7 +69,7 @@ client.on('interactionCreate', async interaction => {
   if (!isFreeUser && !isOwner) {
     return interaction.reply({
       content: '❌ あなたはこのVCの名前変更権を持っていません。',
-      ephemeral: true
+      ephemeral: false
     });
   }
 
