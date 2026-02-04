@@ -1,7 +1,7 @@
 // ================== 初期設定 ==================
 require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
-const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
+const { joinVoiceChannel } = require('@discordjs/voice');
 const express = require('express');
 
 // ================== 設定 ==================
@@ -42,16 +42,6 @@ client.on('interactionCreate', async interaction => {
 
     return interaction.reply({
       content: 'はい。',
-    });
-  }
-
-  // ================== /leave ==================
-  if (interaction.commandName === 'leave') {
-    const connection = getVoiceConnection(interaction.guild.id);
-    if (connection) connection.destroy();
-
-    return interaction.reply({
-      content: '😇',
     });
   }
 
@@ -133,10 +123,6 @@ client.on('interactionCreate', async interaction => {
       new SlashCommandBuilder()
         .setName('join')
         .setDescription('VCに入るだけ'),
-
-      new SlashCommandBuilder()
-        .setName('leave')
-        .setDescription('VCから出るだけ'),
     ].map(cmd => cmd.toJSON());
 
     console.log('⏳ スラッシュコマンド登録中...');
