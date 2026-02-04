@@ -2,6 +2,7 @@
   "name": "vcname-yeeeeeeeer",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js",
     "register": "node deploy-commands.js"
@@ -9,6 +10,7 @@
   "dependencies": {
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "@discordjs/voice": "^0.16.0"
   }
 }
