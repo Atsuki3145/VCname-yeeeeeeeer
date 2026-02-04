@@ -1,10 +1,11 @@
 // ================== 初期設定 ==================
 require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
 
 // ================== 設定 ==================
-// VC名変更を無条件で許可するユーザーID（あなた）
+// VC名変更を無条件で許可するユーザーID
 const FREE_RENAME_USER_IDS = ['1350484083947475098'];
 
 // ================== Discord Bot ==================
@@ -20,35 +21,64 @@ client.once('ready', () => {
   console.log(`${client.user.tag} でログインしました`);
 });
 
-// ================== /vcrename コマンド処理 ==================
+// ================== interaction 処理 ==================
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
+
+  // ================== /join ==================
+  if (interaction.commandName === 'join') {
+    const vc = interaction.member?.voice?.channel;
+    if (!vc) {
+      return interaction.reply({
+        content: '❌ VCに入ってから使ってください。',
+      });
+    }
+
+    joinVoiceChannel({
+      channelId: vc.id,
+      guildId: vc.guild.id,
+      adapterCreator: vc.guild.voiceAdapterCreator,
+    });
+
+    return interaction.reply({
+      content: 'はい。',
+    });
+  }
+
+  // ================== /leave ==================
+  if (interaction.commandName === 'leave') {
+    const connection = getVoiceConnection(interaction.guild.id);
+    if (connection) connection.destroy();
+
+    return interaction.reply({
+      content: '😇',
+    });
+  }
+
+  // ================== /vcrename ==================
   if (interaction.commandName !== 'vcrename') return;
 
   const newName = interaction.options.getString('name', true);
   const member = interaction.member;
   const user = interaction.user;
 
-  // VCに入っているかチェック
   const voiceChannel = member?.voice?.channel;
   if (!voiceChannel) {
     return interaction.reply({
       content: '❌ VCに入ってから使ってください。',
-      ephemeral: false
     });
   }
 
-  // ================== 特例ユーザー判定（あなた） ==================
+  // 特例ユーザー
   const isFreeUser = FREE_RENAME_USER_IDS.includes(user.id);
 
-  // ================== 所有者チェック（通常ユーザー用） ==================
+  // 所有者チェック
   let isOwner = false;
 
   if (!isFreeUser) {
     const vcName = voiceChannel.name || '';
     const userId = user.id;
 
-    // 正規化（英数字のみ・小文字化）
     const normalize = (s) =>
       (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -56,7 +86,6 @@ client.on('interactionCreate', async interaction => {
     const usernameNorm = normalize(user.username || '');
     const nicknameNorm = normalize(member.nickname || member.displayName || '');
 
-    // IDは完全一致トークンで判定
     const idRegex = new RegExp(`(^|[^0-9])${userId}([^0-9]|$)`);
 
     isOwner =
@@ -65,25 +94,22 @@ client.on('interactionCreate', async interaction => {
       (nicknameNorm && vcNorm.includes(nicknameNorm));
   }
 
-  // 権限チェック
   if (!isFreeUser && !isOwner) {
     return interaction.reply({
       content: '❌ あなたはこのVCの名前変更権を持っていません。',
-      ephemeral: false
     });
   }
 
-  // ================== VC名変更 ==================
   try {
     await voiceChannel.setName(newName);
     return interaction.reply({
-      content: `✅ VC名を **${newName}** に変更しました`
+      content: `✅ VC名を **${newName}** に変更しました`,
     });
   } catch (err) {
     console.error('setName error:', err);
     return interaction.reply({
       content: '⚠️ 名前変更に失敗しました（100文字以内か確認してください）',
-      ephemeral: true
+      ephemeral: true,
     });
   }
 });
@@ -102,7 +128,15 @@ client.on('interactionCreate', async interaction => {
             .setName('name')
             .setDescription('新しいVC名')
             .setRequired(true)
-        )
+        ),
+
+      new SlashCommandBuilder()
+        .setName('join')
+        .setDescription('VCに入るだけ'),
+
+      new SlashCommandBuilder()
+        .setName('leave')
+        .setDescription('VCから出るだけ'),
     ].map(cmd => cmd.toJSON());
 
     console.log('⏳ スラッシュコマンド登録中...');
