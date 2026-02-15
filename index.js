@@ -1,176 +1,91 @@
-// ================== 初期設定 ==================
 require('dotenv').config();
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
-const { joinVoiceChannel } = require('@discordjs/voice');
-const express = require('express');
+const {
+  Client,
+  GatewayIntentBits,
+  SlashCommandBuilder,
+  Routes,
+  REST,
+} = require('discord.js');
 
-// ================== 設定 ==================
-// VC名変更を無条件で許可するユーザーID
-const FREE_RENAME_USER_IDS = ['1350484083947475098'];
-
-// ================== Discord Bot ==================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildMembers,
   ],
 });
 
-// Bot起動時
-client.once('ready', () => {
-  console.log(`${client.user.tag} でログインしました`);
+// 👑 みそらだよID
+const OWNER_ID = '1350484083947475098';
+
+// =====================
+// スラッシュコマンド定義（解除のみ）
+// =====================
+const commands = [
+  new SlashCommandBuilder()
+    .setName('アンタイムアウト')
+    .setDescription('指定ユーザーのタイムアウトを解除する（みそらだよ専用）')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('解除するユーザー')
+        .setRequired(true)
+    )
+    .toJSON(),
+];
+
+// =====================
+// コマンド登録
+// =====================
+client.once('ready', async () => {
+  console.log(`ログイン完了: ${client.user.tag}`);
+
+  const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+
+  try {
+    await rest.put(
+      Routes.applicationCommands(client.user.id),
+      { body: commands }
+    );
+    console.log('スラッシュコマンド登録完了');
+  } catch (err) {
+    console.error('コマンド登録失敗', err);
+  }
 });
 
-// ================== interaction 処理 ==================
+// =====================
+// コマンド処理
+// =====================
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  // ================== /join ==================
-  if (interaction.commandName === 'join') {
-    const vc = interaction.member?.voice?.channel;
-    if (!vc) {
-      return interaction.reply({
-        content: '❌ VCに入ってから使ってください。',
-      });
-    }
-
-    joinVoiceChannel({
-      channelId: vc.id,
-      guildId: vc.guild.id,
-      adapterCreator: vc.guild.voiceAdapterCreator,
-    });
-
+  // 🔒 みそらだよ専用
+  if (interaction.user.id !== OWNER_ID) {
     return interaction.reply({
-      content: 'はい。',
-    });
-  }
-
-  // ================== /vcrename ==================
-  if (interaction.commandName !== 'vcrename') return;
-
-  const newName = interaction.options.getString('name', true);
-  const member = interaction.member;
-  const user = interaction.user;
-
-  const voiceChannel = member?.voice?.channel;
-  if (!voiceChannel) {
-    return interaction.reply({
-      content: '❌ VCに入ってから使ってください。',
-    });
-  }
-
-  // 特例ユーザー
-  const isFreeUser = FREE_RENAME_USER_IDS.includes(user.id);
-
-  // 所有者チェック
-  let isOwner = false;
-
-  if (!isFreeUser) {
-    const vcName = voiceChannel.name || '';
-    const userId = user.id;
-
-    const normalize = (s) =>
-      (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    const vcNorm = normalize(vcName);
-    const usernameNorm = normalize(user.username || '');
-    const nicknameNorm = normalize(member.nickname || member.displayName || '');
-
-    const idRegex = new RegExp(`(^|[^0-9])${userId}([^0-9]|$)`);
-
-    isOwner =
-      idRegex.test(vcName) ||
-      (usernameNorm && vcNorm.includes(usernameNorm)) ||
-      (nicknameNorm && vcNorm.includes(nicknameNorm));
-  }
-
-  if (!isFreeUser && !isOwner) {
-    return interaction.reply({
-      content: '❌ あなたはこのVCの名前変更権を持っていません。',
-    });
-  }
-
-  try {
-    await voiceChannel.setName(newName);
-    return interaction.reply({
-      content: `✅ VC名を **${newName}** に変更しました`,
-    });
-  } catch (err) {
-    console.error('setName error:', err);
-    return interaction.reply({
-      content: '⚠️ 名前変更に失敗しました（100文字以内か確認してください）',
+      content: '使用禁止',
       ephemeral: true,
     });
   }
-});
 
-// ================== スラッシュコマンド登録 ==================
-(async () => {
-  try {
-    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+  if (interaction.commandName === '使用禁止') {
+    const target = interaction.options.getUser('user');
 
-    const commands = [
-      new SlashCommandBuilder()
-        .setName('vcrename')
-        .setDescription('今いるVCの名前を変更します')
-        .addStringOption(option =>
-          option
-            .setName('name')
-            .setDescription('新しいVC名')
-            .setRequired(true)
-        ),
+    try {
+      const member = await interaction.guild.members.fetch(target.id);
 
-      new SlashCommandBuilder()
-        .setName('join')
-        .setDescription('VCに入るだけ'),
-    ].map(cmd => cmd.toJSON());
+      // null を渡すと解除
+      await member.timeout(null, '禁止');
 
-    console.log('⏳ スラッシュコマンド登録中...');
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands }
-    );
-    console.log('✅ スラッシュコマンド登録完了！');
-  } catch (err) {
-    console.error('❌ コマンド登録エラー:', err);
+      await interaction.reply({
+        content: `はい。`,
+      });
+    } catch (err) {
+      console.error(err);
+      await interaction.reply({
+        content: '無理',
+        ephemeral: true,
+      });
+    }
   }
-})();
-
-// ================== Keepalive 用 Web ==================
-const app = express();
-let pingCount = 0;
-let lastPing = null;
-
-app.get('/', (req, res) => {
-  pingCount++;
-  lastPing = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-  console.log(`✅ Keepalive Ping: ${lastPing}`);
-  res.send(`Bot is alive! ✅ Ping: ${pingCount}`);
 });
 
-app.get('/status', (req, res) => {
-  res.json({
-    status: 'alive',
-    pingCount,
-    lastPing
-  });
-});
-
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`✅ Web server running on port ${PORT}`);
-});
-
-// ================== 環境変数チェック ==================
-if (!process.env.TOKEN) {
-  console.error('❌ TOKEN が設定されていません');
-  process.exit(1);
-}
-if (!process.env.CLIENT_ID) {
-  console.error('❌ CLIENT_ID が設定されていません');
-  process.exit(1);
-}
-console.log('✅ 環境変数チェックOK');
-
-// ================== Discord ログイン ==================
-client.login(process.env.TOKEN);
+client.login(process.env.BOT_TOKEN);
